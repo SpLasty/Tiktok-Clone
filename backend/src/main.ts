@@ -1,15 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { GraphQLErrorFilter } from './filters/custom-exception.filter';
+import { ApolloError } from 'apollo-server-express';
 import * as cookieParser from 'cookie-parser';
-import { ValidationPipe } from '@nestjs/common';
-import { BadRequestException } from '@nestjs/common';
-
+import * as graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.js';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  // Enable CORS to allow requests from a specific origin with credentials
   app.enableCors({
     origin: 'http://127.0.0.1:5174',
     credentials: true,
+    // all headers that client are allowed to use
     allowedHeaders: [
       'Accept',
       'Authorization',
@@ -19,11 +20,8 @@ async function bootstrap() {
     ],
     methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
   });
-
-  // Parse cookies from incoming requests
+  app.use(graphqlUploadExpress({ maxFileSize: 10000000000, maxFiles: 10 }));
   app.use(cookieParser());
-
-  // Add a global validation pipe to the application
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -35,16 +33,13 @@ async function bootstrap() {
           );
           return accumulator;
         }, {});
-
         console.log('formattedErrors123', formattedErrors);
-
-        // Throw a `BadRequestException` with the formatted errors
+        // return formatted errors being an object with properties mapping to errors
         throw new BadRequestException(formattedErrors);
       },
     }),
   );
-
-  // Start the application server on port 3001
+  app.useGlobalFilters(new GraphQLErrorFilter());
   await app.listen(3001);
 }
 bootstrap();

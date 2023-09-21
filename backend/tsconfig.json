@@ -16,6 +16,9 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
-  }
+    "noFallthroughCasesInSwitch": false,
+    "types":["node","jest","express","multer"],
+    "typeRoots": ["./node_modules/@types", "./typings"],
+  },
+  "include": ["src/**/*","types.d.ts" ],
 }
